@@ -10,10 +10,10 @@ export const currentUser: User = {
 
 export const mockProjects: Project[] = [
   {
-    id: '1', name: 'ERP S/4HANA – Fase 2', code: 'PRJ-001', status: 'amarelo', health: 65,
+    id: '1', name: 'ERP CompuSoftware – Fase 2', code: 'PRJ-001', status: 'amarelo', health: 65,
     sponsor: 'Carlos Mendes', area: 'TI', gerente: 'Fernanda Lima', budget: 4200000, spent: 2850000,
     forecast: 4500000, startDate: '2025-03-01', endDate: '2026-06-30', progress: 62, riskCount: 5, issueCount: 3,
-    description: 'Migração do ERP legado para SAP S/4HANA – módulos MM, FI, CO e PP.',
+    description: 'Migração do ERP legado para CompuSoftware (CS) – módulos Financeiro, Compras e Produção.',
   },
   {
     id: '2', name: 'Nova Planta Dourados', code: 'PRJ-002', status: 'verde', health: 88,
@@ -49,7 +49,7 @@ export const mockProjects: Project[] = [
 
 export const mockRisks: Risk[] = [
   {
-    id: '1', projectId: '1', projectName: 'ERP S/4HANA – Fase 2', title: 'Escassez de consultores SAP BASIS',
+    id: '1', projectId: '1', projectName: 'ERP CompuSoftware – Fase 2', title: 'Escassez de consultores CS especializados',
     description: 'Mercado aquecido pode impactar a contratação de especialistas.', probability: 'alto',
     impact: 'alto', status: 'aberto', owner: 'Fernanda Lima', response: 'Pré-contratar 2 consultores; backup com parceiro.',
     createdAt: '2025-11-15',
@@ -73,7 +73,7 @@ export const mockRisks: Risk[] = [
     createdAt: '2025-12-01',
   },
   {
-    id: '5', projectId: '1', projectName: 'ERP S/4HANA – Fase 2', title: 'Resistência à mudança nos usuários-chave',
+    id: '5', projectId: '1', projectName: 'ERP CompuSoftware – Fase 2', title: 'Resistência à mudança nos usuários-chave',
     description: 'Áreas operacionais demonstram baixa adesão ao treinamento.', probability: 'medio',
     impact: 'medio', status: 'aberto', owner: 'Fernanda Lima', response: 'Programa de change management com sponsors locais.',
     createdAt: '2026-01-08',
@@ -82,7 +82,7 @@ export const mockRisks: Risk[] = [
 
 export const mockDecisions: Decision[] = [
   {
-    id: '1', projectId: '1', projectName: 'ERP S/4HANA – Fase 2', title: 'Postergar módulo HR para Fase 3',
+    id: '1', projectId: '1', projectName: 'ERP CompuSoftware – Fase 2', title: 'Postergar módulo HR para Fase 3',
     description: 'Decidido não incluir módulo HR na Fase 2 para manter escopo e prazo.', decidedBy: 'Carlos Mendes',
     date: '2026-01-15', status: 'aprovada', impact: 'Redução de R$ 800k no escopo da Fase 2.',
   },
@@ -106,8 +106,8 @@ export const mockMeetings: Meeting[] = [
     status: 'agendada', actionItems: 0, pendingItems: 3,
   },
   {
-    id: '2', title: 'Status Semanal – ERP S/4HANA', type: 'status', date: '2026-02-10',
-    participants: ['Fernanda Lima', 'Ana Rodrigues', 'Time técnico SAP'],
+    id: '2', title: 'Status Semanal – ERP CompuSoftware', type: 'status', date: '2026-02-10',
+    participants: ['Fernanda Lima', 'Ana Rodrigues', 'Time técnico CS'],
     agenda: ['Progresso sprint atual', 'Bloqueios', 'Próximos marcos'],
     status: 'realizada', actionItems: 4, pendingItems: 2,
   },
@@ -146,7 +146,7 @@ export const portfolioTrendData = [
 ];
 
 export const budgetData = [
-  { name: 'ERP S/4H', baseline: 4.2, forecast: 4.5, realizado: 2.85 },
+  { name: 'ERP CS', baseline: 4.2, forecast: 4.5, realizado: 2.85 },
   { name: 'Planta', baseline: 180, forecast: 175, realizado: 95 },
   { name: 'Energia', baseline: 8.5, forecast: 8.2, realizado: 3.2 },
   { name: 'Logística', baseline: 12, forecast: 14.5, realizado: 9.8 },
@@ -169,7 +169,7 @@ export const curvaSData = [
 ];
 
 export const riskHeatmapData = [
-  { probability: 'Alto', impact: 'Alto', count: 2, risks: ['Escassez SAP BASIS', 'Atraso equipamentos'] },
+  { probability: 'Alto', impact: 'Alto', count: 2, risks: ['Escassez consultores CS', 'Atraso equipamentos'] },
   { probability: 'Alto', impact: 'Médio', count: 1, risks: ['Qualidade dados BI'] },
   { probability: 'Médio', impact: 'Alto', count: 1, risks: ['Variação cambial'] },
   { probability: 'Médio', impact: 'Médio', count: 2, risks: ['Resistência à mudança', 'Turnover equipe'] },

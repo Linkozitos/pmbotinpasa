@@ -5,7 +5,7 @@ const integrations = [
   { id: '1', name: 'monday.com', type: 'GraphQL', status: 'conectado', lastSync: '2026-02-11T08:30:00', errors: 0, description: 'Boards, items e updates de projetos' },
   { id: '2', name: 'Microsoft Teams', type: 'Graph API', status: 'conectado', lastSync: '2026-02-11T09:00:00', errors: 0, description: 'Notificações e alertas via canal de equipe' },
   { id: '3', name: 'Microsoft Outlook', type: 'Graph API', status: 'conectado', lastSync: '2026-02-11T07:45:00', errors: 1, description: 'Convites de reunião e emails automáticos' },
-  { id: '4', name: 'SAP S/4HANA (ERP)', type: 'REST/OData', status: 'mock', lastSync: null, errors: 0, description: 'Dados financeiros, ordens e centro de custo' },
+  { id: '4', name: 'CompuSoftware (CS)', type: 'REST API', status: 'mock', lastSync: null, errors: 0, description: 'Dados financeiros, ordens de compra, contratos e centro de custo' },
   { id: '5', name: 'WhatsApp Business', type: 'API Cloud', status: 'desconectado', lastSync: null, errors: 0, description: 'Notificações e alertas (feature flag)' },
   { id: '6', name: 'Power BI', type: 'REST', status: 'mock', lastSync: null, errors: 0, description: 'Embedding de dashboards operacionais' },
 ];
