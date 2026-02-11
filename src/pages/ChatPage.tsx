@@ -59,7 +59,7 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-screen">
-      <PageHeader title="Chat Copilot" subtitle="Assistente de PMO com IA">
+      <PageHeader title="Chat Assessor" subtitle="Assessor de Planejamento com IA">
         {/* Mode toggle */}
         <div className="flex items-center bg-muted rounded-lg p-0.5">
           <button

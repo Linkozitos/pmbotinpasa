@@ -3,14 +3,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, MessageSquare, FolderKanban, Shield, AlertTriangle,
   FileText, Settings, ChevronLeft, ChevronRight, Users, DollarSign,
-  Calendar, Plug, Bot
+  Calendar, Plug, Bot, BookOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { currentUser } from '@/data/mockData';
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
-  { label: 'Chat Copilot', icon: MessageSquare, path: '/chat' },
+  { label: 'Chat Assessor', icon: MessageSquare, path: '/chat' },
   { label: 'Portfólio', icon: FolderKanban, path: '/portfolio' },
   { label: 'Riscos & Issues', icon: AlertTriangle, path: '/risks' },
   { label: 'Governança', icon: Shield, path: '/governance' },
@@ -18,6 +18,7 @@ const navItems = [
   { label: 'Financeiro', icon: DollarSign, path: '/financial' },
   { label: 'Templates', icon: FileText, path: '/templates' },
   { label: 'Integrações', icon: Plug, path: '/integrations' },
+  { label: 'Base de Conhecimento', icon: BookOpen, path: '/knowledge' },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -46,7 +47,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {!collapsed && (
             <div className="animate-fade-in">
               <p className="text-sm font-bold" style={{ color: 'hsl(var(--sidebar-accent-foreground))' }}>PMbOt</p>
-              <p className="text-[10px] font-medium" style={{ color: 'hsl(var(--sidebar-muted))' }}>INPASA · PMO Copilot</p>
+              <p className="text-[10px] font-medium" style={{ color: 'hsl(var(--sidebar-muted))' }}>INPASA · Assessor de Planejamento</p>
             </div>
           )}
         </div>
