@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, MessageSquare, FolderKanban, Shield, AlertTriangle,
   FileText, Settings, ChevronLeft, ChevronRight, Users, DollarSign,
-  Calendar, Plug, Bot, BookOpen
+  Calendar, Plug, Bot, BookOpen, Calculator
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { currentUser } from '@/data/mockData';
@@ -15,6 +15,7 @@ const navItems = [
   { label: 'Riscos & Issues', icon: AlertTriangle, path: '/risks' },
   { label: 'Governança', icon: Shield, path: '/governance' },
   { label: 'Recursos', icon: Users, path: '/resources' },
+  { label: 'Memorial de Cálculo', icon: Calculator, path: '/memorial' },
   { label: 'Financeiro', icon: DollarSign, path: '/financial' },
   { label: 'Templates', icon: FileText, path: '/templates' },
   { label: 'Integrações', icon: Plug, path: '/integrations' },

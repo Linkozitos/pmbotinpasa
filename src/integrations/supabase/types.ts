@@ -412,6 +412,56 @@ export type Database = {
           },
         ]
       }
+      calculation_memories: {
+        Row: {
+          advanced_weight_kg: number
+          created_at: string
+          created_by_user_id: string | null
+          deleted_at: string | null
+          discipline: string | null
+          id: string
+          name: string
+          progress_pct: number
+          project_id: string | null
+          total_weight_kg: number
+          updated_at: string
+        }
+        Insert: {
+          advanced_weight_kg?: number
+          created_at?: string
+          created_by_user_id?: string | null
+          deleted_at?: string | null
+          discipline?: string | null
+          id?: string
+          name: string
+          progress_pct?: number
+          project_id?: string | null
+          total_weight_kg?: number
+          updated_at?: string
+        }
+        Update: {
+          advanced_weight_kg?: number
+          created_at?: string
+          created_by_user_id?: string | null
+          deleted_at?: string | null
+          discipline?: string | null
+          id?: string
+          name?: string
+          progress_pct?: number
+          project_id?: string | null
+          total_weight_kg?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calculation_memories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       capacity_calendars: {
         Row: {
           exceptions_json: Json | null
@@ -816,6 +866,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      import_logs: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          errors_json: Json | null
+          file_name: string | null
+          id: string
+          imported_by_user_id: string | null
+          records_created: number | null
+          records_failed: number | null
+          records_total: number | null
+          records_updated: number | null
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          errors_json?: Json | null
+          file_name?: string | null
+          id?: string
+          imported_by_user_id?: string | null
+          records_created?: number | null
+          records_failed?: number | null
+          records_total?: number | null
+          records_updated?: number | null
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          errors_json?: Json | null
+          file_name?: string | null
+          id?: string
+          imported_by_user_id?: string | null
+          records_created?: number | null
+          records_failed?: number | null
+          records_total?: number | null
+          records_updated?: number | null
+        }
+        Relationships: []
       }
       index_jobs: {
         Row: {
@@ -1282,6 +1374,207 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memory_criteria: {
+        Row: {
+          created_at: string
+          id: string
+          memory_id: string
+          name: string
+          sort_order: number
+          type: string
+          weight_pct: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          memory_id: string
+          name: string
+          sort_order?: number
+          type?: string
+          weight_pct?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          memory_id?: string
+          name?: string
+          sort_order?: number
+          type?: string
+          weight_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_criteria_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "calculation_memories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memory_record_criteria: {
+        Row: {
+          completion_pct: number
+          criterion_id: string
+          id: string
+          observation: string | null
+          record_id: string
+          updated_at: string
+          updated_by_user_id: string | null
+        }
+        Insert: {
+          completion_pct?: number
+          criterion_id: string
+          id?: string
+          observation?: string | null
+          record_id: string
+          updated_at?: string
+          updated_by_user_id?: string | null
+        }
+        Update: {
+          completion_pct?: number
+          criterion_id?: string
+          id?: string
+          observation?: string | null
+          record_id?: string
+          updated_at?: string
+          updated_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_record_criteria_criterion_id_fkey"
+            columns: ["criterion_id"]
+            isOneToOne: false
+            referencedRelation: "memory_criteria"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memory_record_criteria_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "memory_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memory_records: {
+        Row: {
+          advanced_weight_kg: number
+          area: string | null
+          code: string | null
+          company: string | null
+          created_at: string
+          custom_fields: Json | null
+          deleted_at: string | null
+          front: string | null
+          gauge: string | null
+          id: string
+          line_tag: string | null
+          main_material: string | null
+          memory_id: string
+          observations: string | null
+          priority: string | null
+          progress_pct: number
+          quantity: number | null
+          uid: string | null
+          unit: string | null
+          updated_at: string
+          weight_kg: number
+        }
+        Insert: {
+          advanced_weight_kg?: number
+          area?: string | null
+          code?: string | null
+          company?: string | null
+          created_at?: string
+          custom_fields?: Json | null
+          deleted_at?: string | null
+          front?: string | null
+          gauge?: string | null
+          id?: string
+          line_tag?: string | null
+          main_material?: string | null
+          memory_id: string
+          observations?: string | null
+          priority?: string | null
+          progress_pct?: number
+          quantity?: number | null
+          uid?: string | null
+          unit?: string | null
+          updated_at?: string
+          weight_kg?: number
+        }
+        Update: {
+          advanced_weight_kg?: number
+          area?: string | null
+          code?: string | null
+          company?: string | null
+          created_at?: string
+          custom_fields?: Json | null
+          deleted_at?: string | null
+          front?: string | null
+          gauge?: string | null
+          id?: string
+          line_tag?: string | null
+          main_material?: string | null
+          memory_id?: string
+          observations?: string | null
+          priority?: string | null
+          progress_pct?: number
+          quantity?: number | null
+          uid?: string | null
+          unit?: string | null
+          updated_at?: string
+          weight_kg?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_records_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "calculation_memories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memory_saved_views: {
+        Row: {
+          config_json: Json
+          created_at: string
+          created_by_user_id: string | null
+          id: string
+          is_default: boolean
+          memory_id: string | null
+          name: string
+        }
+        Insert: {
+          config_json?: Json
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          is_default?: boolean
+          memory_id?: string | null
+          name: string
+        }
+        Update: {
+          config_json?: Json
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          is_default?: boolean
+          memory_id?: string | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_saved_views_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "calculation_memories"
             referencedColumns: ["id"]
           },
         ]
@@ -1926,6 +2219,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "risks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule_items: {
+        Row: {
+          activity_name: string
+          completion_pct: number
+          created_at: string
+          deleted_at: string | null
+          duration_days: number | null
+          end_date: string | null
+          id: string
+          observations: string | null
+          project_id: string | null
+          start_date: string | null
+          uid: string
+          updated_at: string
+          wbs: string | null
+        }
+        Insert: {
+          activity_name: string
+          completion_pct?: number
+          created_at?: string
+          deleted_at?: string | null
+          duration_days?: number | null
+          end_date?: string | null
+          id?: string
+          observations?: string | null
+          project_id?: string | null
+          start_date?: string | null
+          uid: string
+          updated_at?: string
+          wbs?: string | null
+        }
+        Update: {
+          activity_name?: string
+          completion_pct?: number
+          created_at?: string
+          deleted_at?: string | null
+          duration_days?: number | null
+          end_date?: string | null
+          id?: string
+          observations?: string | null
+          project_id?: string | null
+          start_date?: string | null
+          uid?: string
+          updated_at?: string
+          wbs?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_items_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
