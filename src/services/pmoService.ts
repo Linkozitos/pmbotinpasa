@@ -17,19 +17,24 @@ type DecisionStatus = Database['public']['Enums']['decision_status'];
 
 // ===== PROJECTS =====
 export async function listProjects(filters?: { status?: ProjectStatus; health?: HealthStatus; search?: string }) {
-  let query = supabase
-    .from('projects')
-    .select('*')
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false });
+  try {
+    let query = supabase
+      .from('projects')
+      .select('*')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
 
-  if (filters?.status) query = query.eq('status', filters.status);
-  if (filters?.health) query = query.eq('health', filters.health);
-  if (filters?.search) query = query.ilike('name', `%${filters.search}%`);
+    if (filters?.status) query = query.eq('status', filters.status);
+    if (filters?.health) query = query.eq('health', filters.health);
+    if (filters?.search) query = query.ilike('name', `%${filters.search}%`);
 
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error listing projects:', error);
+    return [];
+  }
 }
 
 export async function getProject(id: string) {
@@ -222,28 +227,40 @@ export async function listForecastCosts(projectId?: string) {
 
 // ===== DASHBOARD AGGREGATES =====
 export async function getDashboardData() {
-  const [
-    { data: projects },
-    { data: risks },
-    { data: issues },
-    { data: contracts },
-    { data: budgetLines },
-    { data: meetings },
-  ] = await Promise.all([
-    supabase.from('projects').select('id, name, code, status, health, progress_pct, priority').is('deleted_at', null),
-    supabase.from('risks').select('id, status, probability, impact, score, project_id').is('deleted_at', null),
-    supabase.from('issues').select('id, status, severity, project_id').is('deleted_at', null),
-    supabase.from('contracts').select('id, status, total_value').is('deleted_at', null),
-    supabase.from('budget_lines').select('id, project_id, type, baseline_amount, forecast_amount, actual_amount'),
-    supabase.from('meetings').select('id, title, date, status, agenda').eq('status', 'agendada').order('date', { ascending: true }).limit(3),
-  ]);
+  try {
+    const results = await Promise.allSettled([
+      supabase.from('projects').select('id, name, code, status, health, progress_pct, priority').is('deleted_at', null),
+      supabase.from('risks').select('id, status, probability, impact, score, project_id').is('deleted_at', null),
+      supabase.from('issues').select('id, status, severity, project_id').is('deleted_at', null),
+      supabase.from('contracts').select('id, status, total_value').is('deleted_at', null),
+      supabase.from('budget_lines').select('id, project_id, type, baseline_amount, forecast_amount, actual_amount'),
+      supabase.from('meetings').select('id, title, date, status, agenda').eq('status', 'agendada').order('date', { ascending: true }).limit(3),
+    ]);
 
-  return {
-    projects: projects || [],
-    risks: risks || [],
-    issues: issues || [],
-    contracts: contracts || [],
-    budgetLines: budgetLines || [],
-    meetings: meetings || [],
-  };
+    const getValue = (res: PromiseSettledResult<any>, defaultValue: any = []) => {
+      if (res.status === 'fulfilled' && !res.value.error) {
+        return res.value.data || defaultValue;
+      }
+      return defaultValue;
+    };
+
+    return {
+      projects: getValue(results[0]),
+      risks: getValue(results[1]),
+      issues: getValue(results[2]),
+      contracts: getValue(results[3]),
+      budgetLines: getValue(results[4]),
+      meetings: getValue(results[5]),
+    };
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    return {
+      projects: [],
+      risks: [],
+      issues: [],
+      contracts: [],
+      budgetLines: [],
+      meetings: [],
+    };
+  }
 }

@@ -25,9 +25,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchRole = async (userId: string) => {
     try {
-      const { data } = await supabase.rpc('get_user_role', { _user_id: userId });
-      setRole(data as AppRole | null);
-    } catch {
+      // Primeiro tenta via RPC se existir
+      const { data, error } = await supabase.rpc('get_user_role', { _user_id: userId });
+      if (!error && data) {
+        setRole(data as AppRole | null);
+        return;
+      }
+
+      // Fallback: busca direta na tabela user_roles
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (roles && roles.length > 0) {
+        setRole(roles[0].role as AppRole);
+      } else {
+        setRole(null);
+      }
+    } catch (err) {
+      console.error('Error fetching role:', err);
       setRole(null);
     }
   };
