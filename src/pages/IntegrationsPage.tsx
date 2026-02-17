@@ -1,57 +1,68 @@
-import { Plug, CheckCircle, XCircle, Clock, RefreshCw } from 'lucide-react';
+import { Plug, CheckCircle, XCircle, Clock, RefreshCw, Loader2 } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { translateSupabaseError } from '@/lib/supabaseErrors';
 
-const integrations = [
-  { id: '1', name: 'monday.com', type: 'GraphQL', status: 'conectado', lastSync: '2026-02-11T08:30:00', errors: 0, description: 'Boards, items e updates de projetos' },
-  { id: '2', name: 'Microsoft Teams', type: 'Graph API', status: 'conectado', lastSync: '2026-02-11T09:00:00', errors: 0, description: 'Notificações e alertas via canal de equipe' },
-  { id: '3', name: 'Microsoft Outlook', type: 'Graph API', status: 'conectado', lastSync: '2026-02-11T07:45:00', errors: 1, description: 'Convites de reunião e emails automáticos' },
-  { id: '4', name: 'CompuSoftware (CS)', type: 'REST API', status: 'mock', lastSync: null, errors: 0, description: 'Dados financeiros, ordens de compra, contratos e centro de custo' },
-  { id: '5', name: 'WhatsApp Business', type: 'API Cloud', status: 'desconectado', lastSync: null, errors: 0, description: 'Notificações e alertas (feature flag)' },
-  { id: '6', name: 'Power BI', type: 'REST', status: 'mock', lastSync: null, errors: 0, description: 'Embedding de dashboards operacionais' },
-];
+async function listConnectors() {
+  const { data, error } = await supabase.from('integration_connectors').select('*').order('name');
+  if (error) throw error;
+  return data;
+}
 
 const statusConfig: Record<string, { icon: typeof CheckCircle; label: string; className: string }> = {
-  conectado: { icon: CheckCircle, label: 'Conectado', className: 'status-badge-green' },
-  desconectado: { icon: XCircle, label: 'Desconectado', className: 'status-badge-red' },
-  mock: { icon: Clock, label: 'Mock/Dev', className: 'status-badge-yellow' },
+  active: { icon: CheckCircle, label: 'Ativo', className: 'status-badge-green' },
+  configured: { icon: Clock, label: 'Configurado', className: 'status-badge-yellow' },
+  error: { icon: XCircle, label: 'Erro', className: 'status-badge-red' },
+  disabled: { icon: XCircle, label: 'Desativado', className: 'status-badge-red' },
 };
 
 export default function IntegrationsPage() {
+  const { data: connectors, isLoading, error, refetch } = useQuery({
+    queryKey: ['connectors'],
+    queryFn: listConnectors,
+  });
+
   return (
     <div>
       <PageHeader title="Integrações" subtitle="Catálogo de conectores e status de sync" />
       <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {integrations.map((int) => {
-            const sc = statusConfig[int.status];
-            const Icon = sc.icon;
-            return (
-              <div key={int.id} className="kpi-card animate-fade-in">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-semibold text-foreground">{int.name}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">{int.description}</p>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 size={20} className="animate-spin text-accent mr-2" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <p className="text-sm text-destructive">{translateSupabaseError(error)}</p>
+            <button onClick={() => refetch()} className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-accent text-accent-foreground">
+              <RefreshCw size={14} /> Tentar novamente
+            </button>
+          </div>
+        ) : (connectors || []).length === 0 ? (
+          <p className="text-center py-20 text-sm text-muted-foreground">Nenhum conector cadastrado.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {(connectors || []).map((int: any) => {
+              const sc = statusConfig[int.status] || statusConfig['configured'];
+              const Icon = sc.icon;
+              return (
+                <div key={int.id} className="kpi-card animate-fade-in">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-semibold text-foreground">{int.name}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5 capitalize">{int.type}</p>
+                    </div>
+                    <span className={sc.className}><Icon size={10} className="mr-1 inline" />{sc.label}</span>
                   </div>
-                  <span className={sc.className}><Icon size={10} className="mr-1 inline" />{sc.label}</span>
+                  <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Tipo: <span className="font-mono">{int.type}</span></span>
+                    <span className="text-muted-foreground/60">{new Date(int.updated_at).toLocaleDateString('pt-BR')}</span>
+                  </div>
                 </div>
-                <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Tipo: <span className="font-mono">{int.type}</span></span>
-                  {int.lastSync ? (
-                    <span className="flex items-center gap-1">
-                      <RefreshCw size={10} />
-                      Último sync: {new Date(int.lastSync).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground/60">Sem sync</span>
-                  )}
-                </div>
-                {int.errors > 0 && (
-                  <p className="text-xs text-destructive mt-2 font-medium">{int.errors} erro(s) no último run</p>
-                )}
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

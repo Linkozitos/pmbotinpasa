@@ -1,80 +1,134 @@
+import { useState } from 'react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
-import { mockProjects, budgetData } from '@/data/mockData';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-
-const financialDetail = mockProjects.map(p => ({
-  projeto: p.code,
-  nome: p.name,
-  baseline: p.budget,
-  forecast: p.forecast,
-  realizado: p.spent,
-  desvio: ((p.forecast - p.budget) / p.budget * 100),
-}));
+import { useQuery } from '@tanstack/react-query';
+import { listBudgetLines, listContracts, listActualCosts, listForecastCosts } from '@/services/pmoService';
+import { translateSupabaseError } from '@/lib/supabaseErrors';
+import { cn } from '@/lib/utils';
 
 export default function FinancialPage() {
-  const totalBaseline = mockProjects.reduce((s, p) => s + p.budget, 0);
-  const totalForecast = mockProjects.reduce((s, p) => s + p.forecast, 0);
-  const totalSpent = mockProjects.reduce((s, p) => s + p.spent, 0);
+  const [tab, setTab] = useState<'budget' | 'contracts'>('budget');
+
+  const { data: budgetLines, isLoading: loadingB, error: errorB, refetch: refetchB } = useQuery({
+    queryKey: ['budget_lines'],
+    queryFn: () => listBudgetLines(),
+  });
+
+  const { data: contracts, isLoading: loadingC, error: errorC, refetch: refetchC } = useQuery({
+    queryKey: ['contracts'],
+    queryFn: () => listContracts(),
+  });
+
+  const isLoading = tab === 'budget' ? loadingB : loadingC;
+  const error = tab === 'budget' ? errorB : errorC;
+  const refetch = tab === 'budget' ? refetchB : refetchC;
+
+  const totalBaseline = (budgetLines || []).reduce((s, b) => s + (b.baseline_amount || 0), 0);
+  const totalForecast = (budgetLines || []).reduce((s, b) => s + (b.forecast_amount || 0), 0);
+  const totalActual = (budgetLines || []).reduce((s, b) => s + (b.actual_amount || 0), 0);
   const fmt = (v: number) => `R$ ${(v / 1_000_000).toFixed(1)}M`;
 
   return (
     <div>
       <PageHeader title="Financeiro" subtitle="CAPEX/OPEX — Baseline, Forecast e Realizado" />
       <div className="p-6 space-y-6">
+        {/* KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="kpi-card"><span className="text-xs text-muted-foreground">Baseline Total</span><p className="text-xl font-bold text-foreground mt-1">{fmt(totalBaseline)}</p></div>
-          <div className="kpi-card"><span className="text-xs text-muted-foreground">Forecast Total</span><p className="text-xl font-bold text-foreground mt-1">{fmt(totalForecast)}</p></div>
-          <div className="kpi-card"><span className="text-xs text-muted-foreground">Realizado</span><p className="text-xl font-bold text-foreground mt-1">{fmt(totalSpent)}</p></div>
+          <div className="kpi-card"><span className="text-xs text-muted-foreground">Baseline Total</span><p className="text-xl font-bold text-foreground mt-1">{totalBaseline > 0 ? fmt(totalBaseline) : '—'}</p></div>
+          <div className="kpi-card"><span className="text-xs text-muted-foreground">Forecast Total</span><p className="text-xl font-bold text-foreground mt-1">{totalForecast > 0 ? fmt(totalForecast) : '—'}</p></div>
+          <div className="kpi-card"><span className="text-xs text-muted-foreground">Realizado</span><p className="text-xl font-bold text-foreground mt-1">{totalActual > 0 ? fmt(totalActual) : '—'}</p></div>
           <div className="kpi-card">
             <span className="text-xs text-muted-foreground">Desvio Forecast</span>
-            <p className="text-xl font-bold mt-1" style={{ color: totalForecast > totalBaseline ? 'hsl(var(--destructive))' : 'hsl(var(--success))' }}>
-              {((totalForecast - totalBaseline) / totalBaseline * 100).toFixed(1)}%
+            <p className="text-xl font-bold mt-1" style={{ color: totalBaseline > 0 && totalForecast > totalBaseline ? 'hsl(var(--destructive))' : 'hsl(var(--success))' }}>
+              {totalBaseline > 0 ? `${((totalForecast - totalBaseline) / totalBaseline * 100).toFixed(1)}%` : '—'}
             </p>
           </div>
         </div>
 
-        <div className="bg-card rounded-lg border border-border p-5 shadow-card">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Comparativo Financeiro (R$ M)</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={budgetData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-              <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-              <Tooltip />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="baseline" fill="hsl(var(--primary))" name="Baseline" radius={[2, 2, 0, 0]} />
-              <Bar dataKey="forecast" fill="hsl(var(--warning))" name="Forecast" radius={[2, 2, 0, 0]} />
-              <Bar dataKey="realizado" fill="hsl(var(--accent))" name="Realizado" radius={[2, 2, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+        {/* Tabs */}
+        <div className="flex gap-1 border-b border-border">
+          <button onClick={() => setTab('budget')} className={cn('px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors', tab === 'budget' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>
+            Orçamento ({budgetLines?.length ?? '...'})
+          </button>
+          <button onClick={() => setTab('contracts')} className={cn('px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors', tab === 'contracts' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>
+            Contratos ({contracts?.length ?? '...'})
+          </button>
         </div>
 
-        <div className="bg-card rounded-lg border border-border shadow-card overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Projeto</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Baseline</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Forecast</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Realizado</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Desvio</th>
-              </tr>
-            </thead>
-            <tbody>
-              {financialDetail.map((f) => (
-                <tr key={f.projeto} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                  <td className="px-4 py-3"><span className="font-mono text-xs text-muted-foreground mr-2">{f.projeto}</span><span className="font-medium text-foreground">{f.nome}</span></td>
-                  <td className="px-4 py-3 text-right font-mono text-xs">R$ {(f.baseline / 1_000_000).toFixed(1)}M</td>
-                  <td className="px-4 py-3 text-right font-mono text-xs">R$ {(f.forecast / 1_000_000).toFixed(1)}M</td>
-                  <td className="px-4 py-3 text-right font-mono text-xs">R$ {(f.realizado / 1_000_000).toFixed(1)}M</td>
-                  <td className="px-4 py-3 text-right font-medium text-xs" style={{ color: f.desvio > 0 ? 'hsl(var(--destructive))' : 'hsl(var(--success))' }}>
-                    {f.desvio > 0 ? '+' : ''}{f.desvio.toFixed(1)}%
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 size={20} className="animate-spin text-accent mr-2" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <p className="text-sm text-destructive">{translateSupabaseError(error)}</p>
+            <button onClick={() => refetch()} className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-accent text-accent-foreground">
+              <RefreshCw size={14} /> Tentar novamente
+            </button>
+          </div>
+        ) : tab === 'budget' ? (
+          (budgetLines || []).length === 0 ? (
+            <p className="text-center py-12 text-sm text-muted-foreground">Nenhuma linha orçamentária cadastrada.</p>
+          ) : (
+            <div className="bg-card rounded-lg border border-border shadow-card overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Projeto</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Tipo</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Categoria</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Baseline</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Forecast</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Realizado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(budgetLines || []).map((b: any) => (
+                    <tr key={b.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 text-foreground">{b.projects?.name || '—'}</td>
+                      <td className="px-4 py-3 text-muted-foreground uppercase text-xs">{b.type}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{b.category || '—'}</td>
+                      <td className="px-4 py-3 text-right font-mono text-xs">R$ {((b.baseline_amount || 0) / 1_000).toFixed(0)}k</td>
+                      <td className="px-4 py-3 text-right font-mono text-xs">R$ {((b.forecast_amount || 0) / 1_000).toFixed(0)}k</td>
+                      <td className="px-4 py-3 text-right font-mono text-xs">R$ {((b.actual_amount || 0) / 1_000).toFixed(0)}k</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        ) : (
+          (contracts || []).length === 0 ? (
+            <p className="text-center py-12 text-sm text-muted-foreground">Nenhum contrato cadastrado.</p>
+          ) : (
+            <div className="bg-card rounded-lg border border-border shadow-card overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Número</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Fornecedor</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Valor</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Início</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Fim</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(contracts || []).map((c: any) => (
+                    <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{c.contract_number || '—'}</td>
+                      <td className="px-4 py-3 font-medium text-foreground">{c.vendor_name}</td>
+                      <td className="px-4 py-3"><span className="status-badge capitalize">{c.status?.replace('_', ' ')}</span></td>
+                      <td className="px-4 py-3 text-right font-mono text-xs">{c.total_value ? `R$ ${(c.total_value / 1_000).toFixed(0)}k` : '—'}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{c.start_date ? new Date(c.start_date).toLocaleDateString('pt-BR') : '—'}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{c.end_date ? new Date(c.end_date).toLocaleDateString('pt-BR') : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        )}
       </div>
     </div>
   );

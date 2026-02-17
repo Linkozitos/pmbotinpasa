@@ -1,106 +1,168 @@
+import { useState } from 'react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
-import { mockRisks } from '@/data/mockData';
-import { riskHeatmapData } from '@/data/mockData';
+import { useQuery } from '@tanstack/react-query';
+import { listRisks, listIssues } from '@/services/pmoService';
+import { translateSupabaseError } from '@/lib/supabaseErrors';
 import { cn } from '@/lib/utils';
 
-const probLabels = ['Alto', 'Médio', 'Baixo'];
-const impLabels = ['Baixo', 'Médio', 'Alto'];
-
-function getHeatColor(count: number) {
-  if (count === 0) return 'bg-muted';
-  if (count === 1) return 'bg-warning/20';
-  return 'bg-destructive/20';
-}
-
 export default function RisksPage() {
+  const [tab, setTab] = useState<'risks' | 'issues'>('risks');
+
+  const { data: risks, isLoading: loadingRisks, error: errorRisks, refetch: refetchRisks } = useQuery({
+    queryKey: ['risks'],
+    queryFn: () => listRisks(),
+  });
+
+  const { data: issues, isLoading: loadingIssues, error: errorIssues, refetch: refetchIssues } = useQuery({
+    queryKey: ['issues'],
+    queryFn: () => listIssues(),
+  });
+
+  const isLoading = tab === 'risks' ? loadingRisks : loadingIssues;
+  const error = tab === 'risks' ? errorRisks : errorIssues;
+  const refetch = tab === 'risks' ? refetchRisks : refetchIssues;
+
   return (
     <div>
-      <PageHeader title="Riscos & Issues" subtitle={`${mockRisks.length} riscos registrados`} />
+      <PageHeader title="Riscos & Issues" subtitle={`${risks?.length ?? '...'} riscos · ${issues?.length ?? '...'} issues`} />
 
       <div className="p-6 space-y-6">
-        {/* Heatmap */}
-        <div className="bg-card rounded-lg border border-border p-5 shadow-card">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Heatmap de Riscos (Probabilidade × Impacto)</h3>
-          <div className="flex gap-4">
-            <div className="text-xs text-muted-foreground font-medium flex flex-col justify-around pr-2">
-              {probLabels.map(l => <span key={l}>{l}</span>)}
-            </div>
-            <div className="grid grid-cols-3 gap-2 flex-1 max-w-md">
-              {probLabels.map(prob =>
-                impLabels.map(imp => {
-                  const cell = riskHeatmapData.find(
-                    d => d.probability === prob && d.impact === imp
-                  );
-                  const count = cell?.count ?? 0;
-                  return (
-                    <div
-                      key={`${prob}-${imp}`}
-                      className={cn("rounded-lg p-3 text-center transition-colors", getHeatColor(count))}
-                    >
-                      <p className="text-lg font-bold text-foreground">{count}</p>
-                      {cell?.risks.slice(0, 1).map((r, i) => (
-                        <p key={i} className="text-[10px] text-muted-foreground mt-1 truncate">{r}</p>
-                      ))}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-          <div className="flex justify-center gap-8 mt-2">
-            {impLabels.map(l => (
-              <span key={l} className="text-xs text-muted-foreground font-medium">{l}</span>
-            ))}
-          </div>
-          <p className="text-[10px] text-muted-foreground text-center mt-1">Impacto →</p>
+        {/* Tabs */}
+        <div className="flex gap-1 border-b border-border">
+          <button
+            onClick={() => setTab('risks')}
+            className={cn('px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors',
+              tab === 'risks' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Riscos ({risks?.length ?? '...'})
+          </button>
+          <button
+            onClick={() => setTab('issues')}
+            className={cn('px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors',
+              tab === 'issues' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Issues ({issues?.length ?? '...'})
+          </button>
         </div>
 
-        {/* Risk list */}
-        <div className="bg-card rounded-lg border border-border shadow-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Risco</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Projeto</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Prob.</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Impacto</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Responsável</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Resposta</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockRisks.map((r) => (
-                  <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-foreground">{r.title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{r.description}</p>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{r.projectName}</td>
-                    <td className="px-4 py-3">
-                      <span className={r.probability === 'alto' ? 'status-badge-red' : r.probability === 'medio' ? 'status-badge-yellow' : 'status-badge-green'}>
-                        {r.probability}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={r.impact === 'alto' ? 'status-badge-red' : r.impact === 'medio' ? 'status-badge-yellow' : 'status-badge-green'}>
-                        {r.impact}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={r.status === 'aberto' ? 'status-badge-yellow' : r.status === 'mitigado' ? 'status-badge-green' : 'status-badge-blue'}>
-                        {r.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{r.owner}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground max-w-[200px] truncate">{r.response}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 size={20} className="animate-spin text-accent mr-2" />
+            <span className="text-sm text-muted-foreground">Carregando...</span>
           </div>
-        </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <p className="text-sm text-destructive">{translateSupabaseError(error)}</p>
+            <button onClick={() => refetch()} className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-accent text-accent-foreground">
+              <RefreshCw size={14} /> Tentar novamente
+            </button>
+          </div>
+        ) : tab === 'risks' ? (
+          <RisksTable risks={risks || []} />
+        ) : (
+          <IssuesTable issues={issues || []} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function RisksTable({ risks }: { risks: any[] }) {
+  if (risks.length === 0) return <p className="text-center py-12 text-sm text-muted-foreground">Nenhum risco cadastrado.</p>;
+
+  return (
+    <div className="bg-card rounded-lg border border-border shadow-card overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border bg-muted/50">
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Risco</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Projeto</th>
+              <th className="text-center px-4 py-3 font-medium text-muted-foreground">P</th>
+              <th className="text-center px-4 py-3 font-medium text-muted-foreground">I</th>
+              <th className="text-center px-4 py-3 font-medium text-muted-foreground">Score</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Resposta</th>
+            </tr>
+          </thead>
+          <tbody>
+            {risks.map((r) => (
+              <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                <td className="px-4 py-3">
+                  <p className="font-medium text-foreground">{r.title}</p>
+                  {r.description && <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-xs">{r.description}</p>}
+                </td>
+                <td className="px-4 py-3 text-muted-foreground text-xs">{r.projects?.name || '—'}</td>
+                <td className="px-4 py-3 text-center">{r.probability}</td>
+                <td className="px-4 py-3 text-center">{r.impact}</td>
+                <td className="px-4 py-3 text-center">
+                  <span className={cn('font-bold', (r.score || 0) >= 6 ? 'text-destructive' : (r.score || 0) >= 3 ? 'text-warning' : 'text-success')}>
+                    {r.score || '?'}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className={
+                    r.status === 'aberto' ? 'status-badge-yellow' : r.status === 'mitigando' ? 'status-badge-blue' : 'status-badge-green'
+                  }>
+                    {r.status}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-xs text-muted-foreground max-w-[200px] truncate">{r.response_strategy || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function IssuesTable({ issues }: { issues: any[] }) {
+  if (issues.length === 0) return <p className="text-center py-12 text-sm text-muted-foreground">Nenhuma issue cadastrada.</p>;
+
+  return (
+    <div className="bg-card rounded-lg border border-border shadow-card overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border bg-muted/50">
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Issue</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Projeto</th>
+              <th className="text-center px-4 py-3 font-medium text-muted-foreground">Severidade</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">SLA</th>
+            </tr>
+          </thead>
+          <tbody>
+            {issues.map((i) => (
+              <tr key={i.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                <td className="px-4 py-3">
+                  <p className="font-medium text-foreground">{i.title}</p>
+                  {i.description && <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-xs">{i.description}</p>}
+                </td>
+                <td className="px-4 py-3 text-muted-foreground text-xs">{i.projects?.name || '—'}</td>
+                <td className="px-4 py-3 text-center">
+                  <span className={cn('font-bold', i.severity <= 2 ? 'text-destructive' : i.severity <= 3 ? 'text-warning' : 'text-muted-foreground')}>
+                    {i.severity}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className={
+                    i.status === 'aberto' ? 'status-badge-yellow' : i.status === 'em_andamento' ? 'status-badge-blue' : 'status-badge-green'
+                  }>
+                    {i.status?.replace('_', ' ')}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">
+                  {i.sla_due_date ? new Date(i.sla_due_date).toLocaleDateString('pt-BR') : '—'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
