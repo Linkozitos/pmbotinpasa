@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, MessageSquare, FolderKanban, Shield, AlertTriangle,
-  FileText, Settings, ChevronLeft, ChevronRight, Users, DollarSign,
-  Calendar, Plug, Bot, BookOpen, Calculator
+  FileText, ChevronLeft, ChevronRight, Users, DollarSign,
+  Calendar, Plug, Bot, BookOpen, Calculator, LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { currentUser } from '@/data/mockData';
+import { useAuth } from '@/contexts/AuthContext';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -26,6 +27,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, role, signOut } = useAuth();
+
+  const isActive = (path: string) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname.startsWith(path);
+  };
+
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuário';
+  const initials = userName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -56,7 +66,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Nav */}
         <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => {
-            const active = location.pathname === item.path;
+            const active = isActive(item.path);
             return (
               <button
                 key={item.path}
@@ -76,12 +86,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {!collapsed && (
             <div className="flex items-center gap-2 mb-2 animate-fade-in">
               <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground shrink-0">
-                {currentUser.name.split(' ').map(n => n[0]).join('')}
+                {initials}
               </div>
-              <div className="min-w-0">
-                <p className="text-xs font-medium truncate" style={{ color: 'hsl(var(--sidebar-accent-foreground))' }}>{currentUser.name}</p>
-                <p className="text-[10px] truncate capitalize" style={{ color: 'hsl(var(--sidebar-muted))' }}>{currentUser.role}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium truncate" style={{ color: 'hsl(var(--sidebar-accent-foreground))' }}>{userName}</p>
+                <p className="text-[10px] truncate capitalize" style={{ color: 'hsl(var(--sidebar-muted))' }}>{role || 'sem role'}</p>
               </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={signOut}
+                    className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                  >
+                    <LogOut size={14} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Sair</TooltipContent>
+              </Tooltip>
             </div>
           )}
           <button
