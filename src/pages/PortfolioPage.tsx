@@ -4,7 +4,7 @@ import PageHeader from '@/components/layout/PageHeader';
 import { useQuery } from '@tanstack/react-query';
 import { listProjects } from '@/services/pmoService';
 import { translateSupabaseError } from '@/lib/supabaseErrors';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import NewProjectDialog from '@/components/portfolio/NewProjectDialog';
 
 const healthLabels: Record<string, { label: string; className: string }> = {
   verde: { label: 'Verde', className: 'status-badge-green' },
@@ -22,6 +22,7 @@ const statusLabels: Record<string, string> = {
 
 export default function PortfolioPage() {
   const [search, setSearch] = useState('');
+  const [showNewDialog, setShowNewDialog] = useState(false);
 
   const { data: projects, isLoading, error, refetch } = useQuery({
     queryKey: ['projects', { search: search || undefined }],
@@ -41,16 +42,20 @@ export default function PortfolioPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button disabled className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-accent text-accent-foreground opacity-50 cursor-not-allowed">
-                <Plus size={14} /> Novo Projeto
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Em desenvolvimento</TooltipContent>
-          </Tooltip>
+          <button 
+            onClick={() => setShowNewDialog(true)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-accent text-accent-foreground hover:bg-accent/80 transition-colors"
+          >
+            <Plus size={14} /> Novo Projeto
+          </button>
         </div>
       </PageHeader>
+
+      <NewProjectDialog 
+        open={showNewDialog} 
+        onOpenChange={setShowNewDialog} 
+        onSuccess={() => refetch()} 
+      />
 
       <div className="p-6 space-y-6">
         {isLoading ? (

@@ -92,9 +92,12 @@ export default function RecordCriteriaModal({ record, criteria, memoryId, onClos
     for (const cv of criteriaValues) {
       const criterion = criteria.find((c) => c.id === cv.criterion_id);
       if (!criterion) continue;
-      advancedKg += recordData.weight_kg * (criterion.weight_pct / 100) * (cv.completion_pct / 100);
+      // Calcula a contribuição deste critério para o peso avançado
+      const contribution = recordData.weight_kg * (criterion.weight_pct / 100) * (cv.completion_pct / 100);
+      advancedKg += contribution;
     }
-    return advancedKg;
+    // Arredonda para 4 casas decimais para evitar problemas de precisão de ponto flutuante
+    return Math.round(advancedKg * 10000) / 10000;
   };
 
   const advancedKg = calcAdvanced();
