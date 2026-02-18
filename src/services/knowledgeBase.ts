@@ -161,8 +161,12 @@ export async function uploadDocument(
     tags: string[]; // tag names
   }
 ) {
-  // 1. Upload file to storage
-  const filePath = `${crypto.randomUUID()}/${file.name}`;
+  // 1. Get current user for ownership-based storage path
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuário não autenticado');
+
+  // 2. Upload file to storage (user ID as first folder for RLS)
+  const filePath = `${user.id}/${crypto.randomUUID()}/${file.name}`;
   const { error: uploadError } = await supabase.storage
     .from('knowledge')
     .upload(filePath, file);
