@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Loader2, RefreshCw, Plus } from 'lucide-react';
+import { Search, Loader2, RefreshCw, Plus, FolderKanban } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import { useQuery } from '@tanstack/react-query';
 import { listProjects } from '@/services/pmoService';
@@ -71,8 +71,18 @@ export default function PortfolioPage() {
             </button>
           </div>
         ) : (projects || []).length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-sm text-muted-foreground">Nenhum projeto encontrado.</p>
+          <div className="text-center py-20 bg-card rounded-xl border border-dashed border-border">
+            <FolderKanban size={48} className="mx-auto text-muted-foreground/20 mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Nenhum projeto encontrado</h3>
+            <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
+              {search ? `Não encontramos resultados para "${search}".` : 'Comece criando seu primeiro projeto para gerenciar o portfólio.'}
+            </p>
+            <button 
+              onClick={() => setShowNewDialog(true)}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium hover:opacity-90 transition-opacity"
+            >
+              <Plus size={18} /> Criar Novo Projeto
+            </button>
           </div>
         ) : (
           <div className="bg-card rounded-lg border border-border shadow-card overflow-hidden">

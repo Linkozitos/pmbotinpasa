@@ -17,8 +17,10 @@ import TemplatesPage from "./pages/TemplatesPage";
 import IntegrationsPage from "./pages/IntegrationsPage";
 import KnowledgeBasePage from "./pages/KnowledgeBasePage";
 import CalculationMemoryPage from "./pages/CalculationMemoryPage";
+import SetupPage from "./pages/SetupPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -82,21 +84,27 @@ function AuthGuard() {
   return <AuthPage />;
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/auth" element={<AuthGuard />} />
-            <Route path="/*" element={<ProtectedRoutes />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const hasConfig = !!supabase;
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/setup" element={<SetupPage />} />
+              {!hasConfig && <Route path="*" element={<Navigate to="/setup" replace />} />}
+              <Route path="/auth" element={<AuthGuard />} />
+              <Route path="/*" element={<ProtectedRoutes />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

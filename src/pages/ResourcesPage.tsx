@@ -1,4 +1,4 @@
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, Users, Plus } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import { useQuery } from '@tanstack/react-query';
 import { listResources, listAllocations } from '@/services/pmoService';
@@ -32,7 +32,19 @@ export default function ResourcesPage() {
             </button>
           </div>
         ) : (resources || []).length === 0 ? (
-          <p className="text-center py-20 text-sm text-muted-foreground">Nenhum recurso cadastrado.</p>
+          <div className="text-center py-20 bg-card rounded-xl border border-dashed border-border">
+            <Users size={48} className="mx-auto text-muted-foreground/20 mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Nenhum recurso cadastrado</h3>
+            <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
+              A base de recursos está vazia. Cadastre membros da equipe ou recursos materiais para gerenciar alocações.
+            </p>
+            <button 
+              disabled
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium opacity-50 cursor-not-allowed"
+            >
+              <Plus size={18} /> Cadastrar Recurso
+            </button>
+          </div>
         ) : (
           <div className="bg-card rounded-lg border border-border shadow-card overflow-hidden">
             <table className="w-full text-sm">

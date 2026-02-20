@@ -1,4 +1,4 @@
-import { Plug, CheckCircle, XCircle, Clock, RefreshCw, Loader2 } from 'lucide-react';
+import { Plug, CheckCircle, XCircle, Clock, RefreshCw, Loader2, Plus } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,7 +39,19 @@ export default function IntegrationsPage() {
             </button>
           </div>
         ) : (connectors || []).length === 0 ? (
-          <p className="text-center py-20 text-sm text-muted-foreground">Nenhum conector cadastrado.</p>
+          <div className="text-center py-20 bg-card rounded-xl border border-dashed border-border">
+            <Plug size={48} className="mx-auto text-muted-foreground/20 mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Nenhum conector ativo</h3>
+            <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
+              Não há integrações configuradas com sistemas externos (ERP, CS, Power BI).
+            </p>
+            <button 
+              disabled
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium opacity-50 cursor-not-allowed"
+            >
+              <Plus size={18} /> Configurar Integração
+            </button>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {(connectors || []).map((int: any) => {

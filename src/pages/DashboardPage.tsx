@@ -1,4 +1,4 @@
-import { FolderKanban, AlertTriangle, TrendingUp, DollarSign, Calendar, Target, Loader2, RefreshCw } from 'lucide-react';
+import { FolderKanban, AlertTriangle, TrendingUp, DollarSign, Calendar, Target, Loader2, RefreshCw, Plus } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import { KPICard } from '@/components/shared/StatusComponents';
 import { useNavigate } from 'react-router-dom';
@@ -22,18 +22,8 @@ export default function DashboardPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <p className="text-sm text-destructive">{translateSupabaseError(error)}</p>
-        <button onClick={() => refetch()} className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-accent text-accent-foreground">
-          <RefreshCw size={14} /> Tentar novamente
-        </button>
-      </div>
-    );
-  }
-
-  const { projects, risks, issues, contracts, budgetLines, meetings } = data!;
+  const dashboardData = data || { projects: [], risks: [], issues: [], contracts: [], budgetLines: [], meetings: [] };
+  const { projects, risks, issues, contracts, budgetLines, meetings } = dashboardData;
 
   const activeProjects = projects.filter(p => p.status !== 'encerrado');
   const greenProjects = projects.filter(p => p.health === 'verde').length;
@@ -77,8 +67,15 @@ export default function DashboardPage() {
               <h3 className="text-sm font-semibold text-foreground">Projetos do Portfólio</h3>
             </div>
             {activeProjects.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground text-sm">
-                Nenhum projeto cadastrado. <button onClick={() => navigate('/portfolio')} className="text-accent hover:underline">Criar projeto</button>
+              <div className="text-center py-12 px-4">
+                <FolderKanban size={32} className="mx-auto text-muted-foreground/40 mb-3" />
+                <p className="text-sm text-muted-foreground mb-4">Nenhum projeto ativo encontrado no portfólio.</p>
+                <button 
+                  onClick={() => navigate('/portfolio')} 
+                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+                >
+                  <Plus size={14} /> Criar Primeiro Projeto
+                </button>
               </div>
             ) : (
               <div className="overflow-x-auto">

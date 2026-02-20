@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, DollarSign, FileText, Plus } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import { useQuery } from '@tanstack/react-query';
 import { listBudgetLines, listContracts, listActualCosts, listForecastCosts } from '@/services/pmoService';
@@ -68,7 +68,19 @@ export default function FinancialPage() {
           </div>
         ) : tab === 'budget' ? (
           (budgetLines || []).length === 0 ? (
-            <p className="text-center py-12 text-sm text-muted-foreground">Nenhuma linha orçamentária cadastrada.</p>
+            <div className="text-center py-20 bg-card rounded-xl border border-dashed border-border">
+              <DollarSign size={48} className="mx-auto text-muted-foreground/20 mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">Nenhum orçamento registrado</h3>
+              <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
+                Não há linhas orçamentárias (CAPEX/OPEX) cadastradas para os projetos.
+              </p>
+              <button 
+                disabled
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium opacity-50 cursor-not-allowed"
+              >
+                <Plus size={18} /> Adicionar Linha Orçamentária
+              </button>
+            </div>
           ) : (
             <div className="bg-card rounded-lg border border-border shadow-card overflow-hidden">
               <table className="w-full text-sm">
@@ -99,7 +111,19 @@ export default function FinancialPage() {
           )
         ) : (
           (contracts || []).length === 0 ? (
-            <p className="text-center py-12 text-sm text-muted-foreground">Nenhum contrato cadastrado.</p>
+            <div className="text-center py-20 bg-card rounded-xl border border-dashed border-border">
+              <FileText size={48} className="mx-auto text-muted-foreground/20 mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">Nenhum contrato registrado</h3>
+              <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
+                Não há contratos de fornecedores ou serviços vinculados aos projetos.
+              </p>
+              <button 
+                disabled
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium opacity-50 cursor-not-allowed"
+              >
+                <Plus size={18} /> Registrar Contrato
+              </button>
+            </div>
           ) : (
             <div className="bg-card rounded-lg border border-border shadow-card overflow-hidden">
               <table className="w-full text-sm">

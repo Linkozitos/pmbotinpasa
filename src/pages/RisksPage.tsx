@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, AlertTriangle, Plus } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import { useQuery } from '@tanstack/react-query';
 import { listRisks, listIssues } from '@/services/pmoService';
@@ -71,7 +71,21 @@ export default function RisksPage() {
 }
 
 function RisksTable({ risks }: { risks: any[] }) {
-  if (risks.length === 0) return <p className="text-center py-12 text-sm text-muted-foreground">Nenhum risco cadastrado.</p>;
+  if (risks.length === 0) return (
+    <div className="text-center py-20 bg-card rounded-xl border border-dashed border-border">
+      <AlertTriangle size={48} className="mx-auto text-muted-foreground/20 mb-4" />
+      <h3 className="text-lg font-medium text-foreground mb-2">Nenhum risco registrado</h3>
+      <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
+        Não há riscos abertos para os projetos do portfólio no momento.
+      </p>
+      <button 
+        disabled
+        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium opacity-50 cursor-not-allowed"
+      >
+        <Plus size={18} /> Registrar Novo Risco
+      </button>
+    </div>
+  );
 
   return (
     <div className="bg-card rounded-lg border border-border shadow-card overflow-hidden">
@@ -121,7 +135,21 @@ function RisksTable({ risks }: { risks: any[] }) {
 }
 
 function IssuesTable({ issues }: { issues: any[] }) {
-  if (issues.length === 0) return <p className="text-center py-12 text-sm text-muted-foreground">Nenhuma issue cadastrada.</p>;
+  if (issues.length === 0) return (
+    <div className="text-center py-20 bg-card rounded-xl border border-dashed border-border">
+      <AlertTriangle size={48} className="mx-auto text-muted-foreground/20 mb-4" />
+      <h3 className="text-lg font-medium text-foreground mb-2">Nenhuma issue registrada</h3>
+      <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
+        Não há issues ou problemas pendentes registrados para os projetos.
+      </p>
+      <button 
+        disabled
+        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium opacity-50 cursor-not-allowed"
+      >
+        <Plus size={18} /> Registrar Nova Issue
+      </button>
+    </div>
+  );
 
   return (
     <div className="bg-card rounded-lg border border-border shadow-card overflow-hidden">

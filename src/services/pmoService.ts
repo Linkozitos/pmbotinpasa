@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, assertSupabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 
 type Tables = Database['public']['Tables'];
@@ -18,7 +18,8 @@ type DecisionStatus = Database['public']['Enums']['decision_status'];
 // ===== PROJECTS =====
 export async function listProjects(filters?: { status?: ProjectStatus; health?: HealthStatus; search?: string }) {
   try {
-    let query = supabase
+    const client = assertSupabase();
+    let query = client
       .from('projects')
       .select('*')
       .is('deleted_at', null)
@@ -38,25 +39,29 @@ export async function listProjects(filters?: { status?: ProjectStatus; health?: 
 }
 
 export async function getProject(id: string) {
-  const { data, error } = await supabase.from('projects').select('*').eq('id', id).single();
+  const client = assertSupabase();
+  const { data, error } = await client.from('projects').select('*').eq('id', id).single();
   if (error) throw error;
   return data;
 }
 
 export async function createProject(project: ProjectInsert) {
-  const { data, error } = await supabase.from('projects').insert(project).select().single();
+  const client = assertSupabase();
+  const { data, error } = await client.from('projects').insert(project).select().single();
   if (error) throw error;
   return data;
 }
 
 export async function updateProject(id: string, patch: Partial<Tables['projects']['Update']>) {
-  const { data, error } = await supabase.from('projects').update(patch).eq('id', id).select().single();
+  const client = assertSupabase();
+  const { data, error } = await client.from('projects').update(patch).eq('id', id).select().single();
   if (error) throw error;
   return data;
 }
 
 export async function deleteProject(id: string) {
-  const { error } = await supabase.from('projects').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+  const client = assertSupabase();
+  const { error } = await client.from('projects').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
 }
 
@@ -228,13 +233,14 @@ export async function listForecastCosts(projectId?: string) {
 // ===== DASHBOARD AGGREGATES =====
 export async function getDashboardData() {
   try {
+    const client = assertSupabase();
     const results = await Promise.allSettled([
-      supabase.from('projects').select('id, name, code, status, health, progress_pct, priority').is('deleted_at', null),
-      supabase.from('risks').select('id, status, probability, impact, score, project_id').is('deleted_at', null),
-      supabase.from('issues').select('id, status, severity, project_id').is('deleted_at', null),
-      supabase.from('contracts').select('id, status, total_value').is('deleted_at', null),
-      supabase.from('budget_lines').select('id, project_id, type, baseline_amount, forecast_amount, actual_amount'),
-      supabase.from('meetings').select('id, title, date, status, agenda').eq('status', 'agendada').order('date', { ascending: true }).limit(3),
+      client.from('projects').select('id, name, code, status, health, progress_pct, priority').is('deleted_at', null),
+      client.from('risks').select('id, status, probability, impact, score, project_id').is('deleted_at', null),
+      client.from('issues').select('id, status, severity, project_id').is('deleted_at', null),
+      client.from('contracts').select('id, status, total_value').is('deleted_at', null),
+      client.from('budget_lines').select('id, project_id, type, baseline_amount, forecast_amount, actual_amount'),
+      client.from('meetings').select('id, title, date, status, agenda').eq('status', 'agendada').order('date', { ascending: true }).limit(3),
     ]);
 
     const getValue = (res: PromiseSettledResult<any>, defaultValue: any = []) => {
