@@ -5,9 +5,12 @@ import { useQuery } from '@tanstack/react-query';
 import { listRisks, listIssues } from '@/services/pmoService';
 import { translateSupabaseError } from '@/lib/supabaseErrors';
 import { cn } from '@/lib/utils';
+import RiskDialog from '@/components/risks/RiskDialog';
 
 export default function RisksPage() {
   const [tab, setTab] = useState<'risks' | 'issues'>('risks');
+  const [showNewDialog, setShowNewDialog] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
 
   const { data: risks, isLoading: loadingRisks, error: errorRisks, refetch: refetchRisks } = useQuery({
     queryKey: ['risks'],
@@ -25,7 +28,27 @@ export default function RisksPage() {
 
   return (
     <div>
-      <PageHeader title="Riscos & Issues" subtitle={`${risks?.length ?? '...'} riscos · ${issues?.length ?? '...'} issues`} />
+      <PageHeader title="Riscos & Issues" subtitle={`${risks?.length ?? '...'} riscos · ${issues?.length ?? '...'} issues`}>
+        <button 
+          onClick={() => setShowNewDialog(true)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-accent text-accent-foreground hover:bg-accent/80 transition-colors"
+        >
+          <Plus size={14} /> Novo {tab === 'risks' ? 'Risco' : 'Issue'}
+        </button>
+      </PageHeader>
+
+      <RiskDialog 
+        open={showNewDialog || !!selectedItem} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowNewDialog(false);
+            setSelectedItem(null);
+          }
+        }} 
+        onSuccess={() => refetch()} 
+        item={selectedItem}
+        type={tab === 'risks' ? 'risk' : 'issue'}
+      />
 
       <div className="p-6 space-y-6">
         {/* Tabs */}
@@ -61,16 +84,16 @@ export default function RisksPage() {
             </button>
           </div>
         ) : tab === 'risks' ? (
-          <RisksTable risks={risks || []} />
+          <RisksTable risks={risks || []} onEdit={setSelectedItem} />
         ) : (
-          <IssuesTable issues={issues || []} />
+          <IssuesTable issues={issues || []} onEdit={setSelectedItem} />
         )}
       </div>
     </div>
   );
 }
 
-function RisksTable({ risks }: { risks: any[] }) {
+function RisksTable({ risks, onEdit }: { risks: any[], onEdit: (item: any) => void }) {
   if (risks.length === 0) return (
     <div className="text-center py-20 bg-card rounded-xl border border-dashed border-border">
       <AlertTriangle size={48} className="mx-auto text-muted-foreground/20 mb-4" />
@@ -79,8 +102,8 @@ function RisksTable({ risks }: { risks: any[] }) {
         Não há riscos abertos para os projetos do portfólio no momento.
       </p>
       <button 
-        disabled
-        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium opacity-50 cursor-not-allowed"
+        onClick={() => setShowNewDialog(true)}
+        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium hover:opacity-90 transition-opacity"
       >
         <Plus size={18} /> Registrar Novo Risco
       </button>
@@ -104,7 +127,7 @@ function RisksTable({ risks }: { risks: any[] }) {
           </thead>
           <tbody>
             {risks.map((r) => (
-              <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+              <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => onEdit(r)}>
                 <td className="px-4 py-3">
                   <p className="font-medium text-foreground">{r.title}</p>
                   {r.description && <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-xs">{r.description}</p>}
@@ -134,7 +157,7 @@ function RisksTable({ risks }: { risks: any[] }) {
   );
 }
 
-function IssuesTable({ issues }: { issues: any[] }) {
+function IssuesTable({ issues, onEdit }: { issues: any[], onEdit: (item: any) => void }) {
   if (issues.length === 0) return (
     <div className="text-center py-20 bg-card rounded-xl border border-dashed border-border">
       <AlertTriangle size={48} className="mx-auto text-muted-foreground/20 mb-4" />
@@ -143,8 +166,8 @@ function IssuesTable({ issues }: { issues: any[] }) {
         Não há issues ou problemas pendentes registrados para os projetos.
       </p>
       <button 
-        disabled
-        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium opacity-50 cursor-not-allowed"
+        onClick={() => setShowNewDialog(true)}
+        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium hover:opacity-90 transition-opacity"
       >
         <Plus size={18} /> Registrar Nova Issue
       </button>
@@ -166,7 +189,7 @@ function IssuesTable({ issues }: { issues: any[] }) {
           </thead>
           <tbody>
             {issues.map((i) => (
-              <tr key={i.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+              <tr key={i.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => onEdit(i)}>
                 <td className="px-4 py-3">
                   <p className="font-medium text-foreground">{i.title}</p>
                   {i.description && <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-xs">{i.description}</p>}

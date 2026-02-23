@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Sparkles, FileText, AlertTriangle, Calendar, CheckCircle, Lightbulb } from 'lucide-react';
+import { Send, Paperclip, Sparkles, FileText, AlertTriangle, Calendar, CheckCircle, Lightbulb, Loader2 } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
-import { mockChatHistory } from '@/data/mockData';
 import { ChatMessage, CopilotMode } from '@/types/pmo';
 import { cn } from '@/lib/utils';
+import { getDashboardData } from '@/services/pmoService';
+import { useQuery } from '@tanstack/react-query';
 
 const quickActions = [
   { label: 'Gerar status semanal', icon: FileText },
@@ -14,10 +15,23 @@ const quickActions = [
 ];
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>(mockChatHistory);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: '1',
+      role: 'assistant',
+      content: 'Olá! Sou seu Assessor de Planejamento. Como posso ajudar com o portfólio hoje?',
+      timestamp: new Date().toISOString(),
+    }
+  ]);
   const [input, setInput] = useState('');
   const [mode, setMode] = useState<CopilotMode>('executivo');
+  const [isTyping, setIsTyping] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+
+  const { data: pmoData } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: getDashboardData,
+  });
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -33,24 +47,54 @@ export default function ChatPage() {
     };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
+    setIsTyping(true);
 
-    // Simulated response
+    // Resposta baseada em dados reais
     setTimeout(() => {
+      const projects = pmoData?.projects || [];
+      const risks = pmoData?.risks || [];
+      const activeProjects = projects.filter(p => p.status !== 'encerrado');
+      const criticalProjects = projects.filter(p => p.health === 'vermelho');
+      const openRisks = risks.filter(r => r.status === 'aberto');
+
+      let response = '';
+      if (mode === 'executivo') {
+        response = `Atualmente temos **${activeProjects.length} projetos ativos**. `;
+        if (criticalProjects.length > 0) {
+          response += `Atenção imediata necessária em **${criticalProjects.length} projetos críticos**: ${criticalProjects.map(p => p.name).join(', ')}. `;
+        } else {
+          response += `O portfólio segue saudável sem projetos críticos no momento. `;
+        }
+        response += `\n\nExistem **${openRisks.length} riscos abertos** que precisam de revisão.`;
+      } else {
+        response = `Análise detalhada do portfólio (${new Date().toLocaleDateString('pt-BR')}):\n\n`;
+        response += `**Status Geral:** ${activeProjects.length} projetos em andamento. `;
+        response += `A saúde do portfólio está com ${projects.filter(p => p.health === 'verde').length} itens em verde.\n\n`;
+        
+        if (criticalProjects.length > 0) {
+          response += `**Pontos de Atenção:**\n`;
+          criticalProjects.forEach(p => {
+            response += `- ${p.name} (${p.code}): Status ${p.status}, Saúde ${p.health}. Progresso atual: ${p.progress_pct}%.\n`;
+          });
+        }
+
+        response += `\n**Riscos Críticos:** Encontrados ${openRisks.filter(r => (r.score || 0) >= 15).length} riscos de alta severidade.`;
+      }
+
       const botMsg: ChatMessage = {
         id: String(Date.now() + 1),
         role: 'assistant',
-        content: mode === 'executivo'
-          ? '• **Ação 1:** Reunir com Camila Rocha sobre PRJ-004 até sexta\n• **Ação 2:** Validar budget adicional com Paulo Ferreira\n• **Ação 3:** Atualizar risk register antes do comitê de 14/fev\n\n_Modo executivo — respostas curtas e acionáveis._'
-          : 'Analisando os dados disponíveis no portfólio atual...\n\n**Premissas:**\n1. Base de custos atualizada até 10/fev/2026\n2. Risk register com 5 riscos abertos (2 críticos)\n3. Cronograma baseline aprovado em set/2025\n\n**Análise detalhada:**\nO projeto PRJ-004 apresenta desvio de +20.8% no forecast vs baseline (R$ 14.5M vs R$ 12M). As principais causas são:\n- Retrabalho na integração de sensores (40% do desvio)\n- Atraso de 45 dias na entrega de equipamentos importados (35%)\n- Escopo adicional não previsto (25%)\n\n**Recomendação:** Solicitar aprovação formal de R$ 2.5M no comitê de 14/fev com plano de recuperação de prazo.\n\n**Fontes:** Dashboard Portfólio (atualizado 10/fev), Risk Register v3.2, Forecast Financeiro jan/2026\n\n**Confiança:** Alto (dados atualizados < 48h)',
+        content: response,
         timestamp: new Date().toISOString(),
         sources: [
-          { name: 'Dashboard Portfólio', type: 'sistema' },
-          { name: 'Risk Register v3.2', type: 'documento' },
+          { name: 'Banco de Dados Supabase', type: 'sistema' },
+          { name: 'Dashboard Real-time', type: 'sistema' },
         ],
         confidence: 'Alto',
       };
       setMessages(prev => [...prev, botMsg]);
-    }, 1200);
+      setIsTyping(false);
+    }, 1000);
   };
 
   const handleQuickAction = (label: string) => {
@@ -123,6 +167,14 @@ export default function ChatPage() {
             </div>
           </div>
         ))}
+        {isTyping && (
+          <div className="flex justify-start animate-pulse">
+            <div className="chat-bubble-bot flex items-center gap-2">
+              <Loader2 size={14} className="animate-spin" />
+              <span className="text-xs">Assessor analisando dados...</span>
+            </div>
+          </div>
+        )}
         <div ref={endRef} />
       </div>
 

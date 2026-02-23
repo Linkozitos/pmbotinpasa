@@ -4,7 +4,7 @@ import PageHeader from '@/components/layout/PageHeader';
 import { useQuery } from '@tanstack/react-query';
 import { listProjects } from '@/services/pmoService';
 import { translateSupabaseError } from '@/lib/supabaseErrors';
-import NewProjectDialog from '@/components/portfolio/NewProjectDialog';
+import ProjectDialog from '@/components/portfolio/ProjectDialog';
 
 const healthLabels: Record<string, { label: string; className: string }> = {
   verde: { label: 'Verde', className: 'status-badge-green' },
@@ -23,6 +23,7 @@ const statusLabels: Record<string, string> = {
 export default function PortfolioPage() {
   const [search, setSearch] = useState('');
   const [showNewDialog, setShowNewDialog] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
 
   const { data: projects, isLoading, error, refetch } = useQuery({
     queryKey: ['projects', { search: search || undefined }],
@@ -51,10 +52,16 @@ export default function PortfolioPage() {
         </div>
       </PageHeader>
 
-      <NewProjectDialog 
-        open={showNewDialog} 
-        onOpenChange={setShowNewDialog} 
+      <ProjectDialog 
+        open={showNewDialog || !!selectedProject} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowNewDialog(false);
+            setSelectedProject(null);
+          }
+        }} 
         onSuccess={() => refetch()} 
+        project={selectedProject}
       />
 
       <div className="p-6 space-y-6">
@@ -102,7 +109,7 @@ export default function PortfolioPage() {
                 </thead>
                 <tbody>
                   {(projects || []).map((p) => (
-                    <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer">
+                    <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => setSelectedProject(p)}>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{p.code}</td>
                       <td className="px-4 py-3">
                         <p className="font-medium text-foreground">{p.name}</p>

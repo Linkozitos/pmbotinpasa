@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { Loader2, RefreshCw, DollarSign, FileText, Plus } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import { useQuery } from '@tanstack/react-query';
-import { listBudgetLines, listContracts, listActualCosts, listForecastCosts } from '@/services/pmoService';
+import { listBudgetLines, listContracts } from '@/services/pmoService';
 import { translateSupabaseError } from '@/lib/supabaseErrors';
 import { cn } from '@/lib/utils';
+import FinancialDialog from '@/components/financial/FinancialDialog';
 
 export default function FinancialPage() {
   const [tab, setTab] = useState<'budget' | 'contracts'>('budget');
+  const [showNewDialog, setShowNewDialog] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
 
   const { data: budgetLines, isLoading: loadingB, error: errorB, refetch: refetchB } = useQuery({
     queryKey: ['budget_lines'],
@@ -30,7 +33,27 @@ export default function FinancialPage() {
 
   return (
     <div>
-      <PageHeader title="Financeiro" subtitle="CAPEX/OPEX — Baseline, Forecast e Realizado" />
+      <PageHeader title="Financeiro" subtitle="CAPEX/OPEX — Baseline, Forecast e Realizado">
+        <button 
+          onClick={() => setShowNewDialog(true)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-accent text-accent-foreground hover:bg-accent/80 transition-colors"
+        >
+          <Plus size={14} /> Novo {tab === 'budget' ? 'Orçamento' : 'Contrato'}
+        </button>
+      </PageHeader>
+
+      <FinancialDialog 
+        open={showNewDialog || !!selectedItem} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowNewDialog(false);
+            setSelectedItem(null);
+          }
+        }} 
+        onSuccess={() => refetch()} 
+        item={selectedItem}
+        type={tab === 'budget' ? 'budget' : 'contract'}
+      />
       <div className="p-6 space-y-6">
         {/* KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -75,8 +98,8 @@ export default function FinancialPage() {
                 Não há linhas orçamentárias (CAPEX/OPEX) cadastradas para os projetos.
               </p>
               <button 
-                disabled
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium opacity-50 cursor-not-allowed"
+                onClick={() => setShowNewDialog(true)}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium hover:opacity-90 transition-opacity"
               >
                 <Plus size={18} /> Adicionar Linha Orçamentária
               </button>
@@ -96,7 +119,7 @@ export default function FinancialPage() {
                 </thead>
                 <tbody>
                   {(budgetLines || []).map((b: any) => (
-                    <tr key={b.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                    <tr key={b.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => setSelectedItem(b)}>
                       <td className="px-4 py-3 text-foreground">{b.projects?.name || '—'}</td>
                       <td className="px-4 py-3 text-muted-foreground uppercase text-xs">{b.type}</td>
                       <td className="px-4 py-3 text-muted-foreground">{b.category || '—'}</td>
@@ -118,8 +141,8 @@ export default function FinancialPage() {
                 Não há contratos de fornecedores ou serviços vinculados aos projetos.
               </p>
               <button 
-                disabled
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium opacity-50 cursor-not-allowed"
+                onClick={() => setShowNewDialog(true)}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium hover:opacity-90 transition-opacity"
               >
                 <Plus size={18} /> Registrar Contrato
               </button>
@@ -139,7 +162,7 @@ export default function FinancialPage() {
                 </thead>
                 <tbody>
                   {(contracts || []).map((c: any) => (
-                    <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                    <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => setSelectedItem(c)}>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{c.contract_number || '—'}</td>
                       <td className="px-4 py-3 font-medium text-foreground">{c.vendor_name}</td>
                       <td className="px-4 py-3"><span className="status-badge capitalize">{c.status?.replace('_', ' ')}</span></td>

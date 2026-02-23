@@ -3,8 +3,13 @@ import PageHeader from '@/components/layout/PageHeader';
 import { useQuery } from '@tanstack/react-query';
 import { listResources, listAllocations } from '@/services/pmoService';
 import { translateSupabaseError } from '@/lib/supabaseErrors';
+import ResourceDialog from '@/components/resources/ResourceDialog';
+import { useState } from 'react';
 
 export default function ResourcesPage() {
+  const [showNewDialog, setShowNewDialog] = useState(false);
+  const [selectedResource, setSelectedResource] = useState<any>(null);
+
   const { data: resources, isLoading, error, refetch } = useQuery({
     queryKey: ['resources'],
     queryFn: listResources,
@@ -17,7 +22,26 @@ export default function ResourcesPage() {
 
   return (
     <div>
-      <PageHeader title="Recursos & Capacidade" subtitle={`${resources?.length ?? '...'} recursos cadastrados`} />
+      <PageHeader title="Recursos & Capacidade" subtitle={`${resources?.length ?? '...'} recursos cadastrados`}>
+        <button 
+          onClick={() => setShowNewDialog(true)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-accent text-accent-foreground hover:bg-accent/80 transition-colors"
+        >
+          <Plus size={14} /> Novo Recurso
+        </button>
+      </PageHeader>
+
+      <ResourceDialog 
+        open={showNewDialog || !!selectedResource} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowNewDialog(false);
+            setSelectedResource(null);
+          }
+        }} 
+        onSuccess={() => refetch()} 
+        resource={selectedResource}
+      />
       <div className="p-6 space-y-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -39,8 +63,8 @@ export default function ResourcesPage() {
               A base de recursos está vazia. Cadastre membros da equipe ou recursos materiais para gerenciar alocações.
             </p>
             <button 
-              disabled
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium opacity-50 cursor-not-allowed"
+              onClick={() => setShowNewDialog(true)}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent text-accent-foreground font-medium hover:opacity-90 transition-opacity"
             >
               <Plus size={18} /> Cadastrar Recurso
             </button>
@@ -60,7 +84,7 @@ export default function ResourcesPage() {
                 {(resources || []).map((r: any) => {
                   const allocs = (allocations || []).filter((a: any) => a.resource_id === r.id);
                   return (
-                    <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                    <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => setSelectedResource(r)}>
                       <td className="px-4 py-3 font-medium text-foreground">{r.name}</td>
                       <td className="px-4 py-3 text-muted-foreground">{r.role_title || '—'}</td>
                       <td className="px-4 py-3 text-muted-foreground capitalize">{r.type || '—'}</td>
